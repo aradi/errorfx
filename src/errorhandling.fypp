@@ -1,0 +1,32 @@
+#:mute
+
+#:def handle_error(code, **kwargs)
+  block
+    type(status) :: stat
+    $:code
+    if (stat%has_error()) then
+      select type (error => stat%error)
+      #:for errtype, handlercode in kwargs.items()
+        class is (${errtype}$)
+          $:handlercode
+          call stat%clear_error()
+      #:endfor
+      end select
+    end if
+  end block
+#:enddef
+
+
+#:def propagate_error()
+  if (stat%has_error()) then
+    return
+  end if
+#:enddef
+
+#:endmute
+
+
+#:def raise_error(error)
+  call stat%set_error(${error}$)
+  return
+#:enddef
