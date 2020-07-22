@@ -1,0 +1,37 @@
+#:mute
+
+#:def handle_exception(excvar, code, **kwargs)
+block
+  class(exception), allocatable :: ${excvar}$
+  $:code
+  if (allocated(exc)) then
+    select type (exc)
+    #:for exctype, handlercode in kwargs.items()
+      class is (${exctype}$)
+        $:handlercode
+        call exc%clear()
+    #:endfor
+    end select
+  end if
+end block
+#:enddef
+
+
+#:def propagate_exception(excvar, code)
+$:code
+if (allocated(${excvar}$)) then
+  return
+end if
+#:enddef
+
+#:endmute
+
+
+#:def raise_exception(excvar, exctype, *args)
+block
+  type(${exctype}$), allocatable :: local_exc_
+  allocate(local_exc_)
+  call local_exc_%raise(${", ".join(args)}$)
+  call move_alloc(local_exc_, ${excvar}$)
+end block
+#:enddef
