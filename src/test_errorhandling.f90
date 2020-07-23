@@ -5,7 +5,7 @@ program test_errorhandling
   use errorhandling, only : status, os_error, num_error
   implicit none
 
-  print *, "Testing error ignoring (would error stop if an error had occured!)"
+  print *, "Testing error ignoring (would stop if an error had occured!)"
   block
     type(status) :: stat
     call error_raiser(stat, raise_error=.false.)
@@ -22,10 +22,10 @@ program test_errorhandling
       select type (error => stat%error)
       class is (os_error)
         print *, "OS Error found: ", error%msg
-        call stat%clear_error()
+        call stat%clear()
       class is (num_error)
         print *, "NUM Error found: ", error%msg
-        call stat%clear_error()
+        call stat%clear()
       end select
     end if
   end block
@@ -41,10 +41,10 @@ program test_errorhandling
       select type (error => stat%error)
       class is (os_error)
         print *, "OS Error found: ", error%msg
-        call stat%clear_error()
+        call stat%clear()
       class is (num_error)
         print *, "NUM Error found: ", error%msg
-        call stat%clear_error()
+        call stat%clear()
       end select
     end if
   end block
@@ -60,7 +60,7 @@ program test_errorhandling
       select type (error => stat%error)
       class is (num_error)
         print *, "OS Error found", error%msg
-        call stat%clear_error()
+        call stat%clear()
       end select
     end if
   end block

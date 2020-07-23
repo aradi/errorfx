@@ -9,7 +9,7 @@
       #:for errtype, handlercode in kwargs.items()
         class is (${errtype}$)
           $:handlercode
-          call stat%clear_error()
+          call stat%clear()
       #:endfor
       end select
     end if

@@ -75,7 +75,7 @@ contains
       deallocate(this%error)
     end if
 
-  end subroutine status_clear_error
+  end subroutine status_clear
 
 
   ! Checks, whether status contains an error

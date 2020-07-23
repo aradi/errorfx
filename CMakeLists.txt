@@ -6,9 +6,13 @@ include(exceptions)
 
 project(exceptions VERSION 0.1 LANGUAGES Fortran)
 
-find_program(FYPP fypp)
-if(NOT FYPP)
-  message(FATAL_ERROR "Preprocessor fypp not found")
+option(WITH_FYPP "Whether Fypp preprocessor should be used" TRUE)
+
+if(WITH_FYPP)
+  find_program(FYPP fypp)
+  if(NOT FYPP)
+    message(FATAL_ERROR "Preprocessor fypp not found")
+  endif()
 endif()
 
 add_subdirectory(src)
