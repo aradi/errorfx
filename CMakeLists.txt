@@ -8,6 +8,9 @@ project(exceptions VERSION 0.1 LANGUAGES Fortran)
 
 option(WITH_FYPP "Whether Fypp preprocessor should be used" TRUE)
 
+set(FYPP_FLAGS "-I${CMAKE_SOURCE_DIR}/include" CACHE STRING "Flag to pass to the Fypp preprocessor")
+
+
 if(WITH_FYPP)
   find_program(FYPP fypp)
   if(NOT FYPP)
@@ -15,4 +18,5 @@ if(WITH_FYPP)
   endif()
 endif()
 
-add_subdirectory(src)
+add_subdirectory(lib)
+add_subdirectory(app)

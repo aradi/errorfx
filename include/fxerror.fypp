@@ -23,10 +23,10 @@
   end if
 #:enddef
 
-#:endmute
-
 
 #:def raise_error(error)
   call stat%set_error(${error}$)
   return
 #:enddef
+
+#:endmute

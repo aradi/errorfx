@@ -1,9 +1,9 @@
-**************
-Error handling
-**************
+********
+FX-Error
+********
 
-Demonstration project for an error handling strategy in Fortran. It provides an
-error handling mechanism which is
+Demonstration project for an error handling strategy in modern Fortran. It
+provides an error handling mechanism which is
 
 * robust: An unhandled error stops the code automatically,
 
@@ -12,10 +12,10 @@ error handling mechanism which is
 * pure: it only requires Fortran 2008 constructs.
 
 It is written in pure Fortran 2008, but using Fypp-constructs can help to
-simplify its usage somewhat. See the `src/test_errorhandling.f90
-<src/test_errorhandling.f90>`_ and `src/test_errorhandling_fypp.fpp
-<src/test_errorhandling_fypp.fpp>`_ for an example with and without Fypp
-constructs, respectively.
+simplify its usage somewhat. See the `app/test_fxerror.f90
+<app/test_fxerror.f90>`_ and `app/test_fxerror_fypp.fpp
+<app/test_fxerror_fypp.fpp>`_ for an example with and without Fypp constructs,
+respectively.
 
 
 Building
@@ -28,9 +28,11 @@ Use the usual CMake workflow to build the project::
   cmake ..
   make
 
-You need to have `Fypp preprocessor` installed so that the Fypp-based example
-can be built. If you want to build without the Fypp-based example, pass the
-``-DWITH_FYPP=FALSE`` option to CMake.
+The executables cann be found in the `./app` folder after the build.
+  
+You need the `Fypp preprocessor <https://github.com/aradi/fypp>`_ to build the
+Fypp-based example. If you want to build the project without the Fypp-based
+example, pass the ``-DWITH_FYPP=NO`` option to CMake.
 
 
 License

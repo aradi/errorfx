@@ -1,7 +1,7 @@
 !
 ! Implements simple error handling mechanism.
 !
-module errorhandling
+module fxerror
   implicit none
   private
 
@@ -139,4 +139,4 @@ contains
   end function construct_num_error
 
 
-end module errorhandling
+end module fxerror

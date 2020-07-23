@@ -1,8 +1,8 @@
 !
 ! Demonstrates error handling
 !
-program test_errorhandling
-  use errorhandling, only : status, os_error, num_error
+program test_fxerror
+  use fxerror, only : status, os_error, num_error
   implicit none
 
   print *, "Testing error ignoring (would stop if an error had occured!)"
@@ -108,4 +108,4 @@ contains
   end subroutine error_propagator
 
 
-end program test_errorhandling
+end program test_fxerror

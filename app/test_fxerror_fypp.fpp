@@ -1,4 +1,4 @@
-#:include "errorhandling.fypp"
+#:include "fxerror.fypp"
 
 !
 ! Demonstrates error handling with the help of Fypp constructs
@@ -6,8 +6,8 @@
 ! NOTE: Currently, Fypp must be used with Python 3.6 or above to ensure that the specific errors
 ! are handled in the right order. (Should be fixed with special options for Fypp later)
 !
-program test_errorhandling
-  use errorhandling, only : status, os_error, num_error
+program test_fxerror_fypp
+  use fxerror, only : status, os_error, num_error
   implicit none
 
   print *, "Testing error ignoring (would error stop if an error had occured!)"
@@ -84,4 +84,4 @@ contains
   end subroutine error_propagator
 
 
-end program test_errorhandling
+end program test_fxerror_fypp
