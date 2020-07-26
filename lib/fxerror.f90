@@ -1,142 +1,126 @@
 !
-! Implements simple error handling mechanism.
+! Implements a simple error handling mechanism.
 !
 module fxerror
   implicit none
   private
 
-  public :: status, general_error, os_error, num_error
+  public :: critical_error, os_error, num_error
+  public :: init
 
-  ! Base class for all errors
-  type :: general_error
-    character(:), allocatable :: msg
-  end type general_error
+  ! Base class for critical errors (stops code if unhandled error goes out of scope)
+  type :: critical_error
+    logical, private :: active_ = .false.
+    character(:), allocatable, private :: msg_
+  contains
+    procedure :: as_char => critical_error_as_char
+    procedure :: activate => critical_error_activate
+    procedure :: deactivate => critical_error_deactivate
+    procedure :: is_active => critical_error_is_active
+    final :: critical_error_final
+  end type critical_error
 
-  interface general_error
-    module procedure construct_general_error
-  end interface general_error
 
   ! Specific error class
-  type, extends(general_error) :: os_error
+  type, extends(critical_error) :: os_error
   end type os_error
 
-  interface os_error
-    module procedure construct_os_error
-  end interface os_error
 
   ! Specific error class
-  type, extends(general_error) :: num_error
+  type, extends(critical_error) :: num_error
   end type num_error
 
-  interface num_error
-    module procedure construct_num_error
-  end interface num_error
 
-
-  ! Contains the status of the program.
-  !
-  ! Note: If an instance contains an error, it would stop the code when going out of scope.
-  !
-  type :: status
-    class(general_error), allocatable :: error
-    logical, private :: has_error_ = .false.
-  contains
-    procedure :: set_error => status_set_error
-    procedure :: clear => status_clear
-    procedure :: has_error => status_has_error
-    procedure :: is_clear => status_is_clear
-    final :: status_final
-  end type status
+  ! Initializes an error
+  interface init
+    module procedure init_critical_error, init_os_error, init_num_error
+  end interface init
 
 
 contains
 
-
-  ! Sets an error.
-  !
-  ! Note: if not cleared explicitely, the instance will stop the code when going out of scope.
-  !
-  subroutine status_set_error(this, error)
-    class(status), intent(inout) :: this
-    class(general_error), intent(in) :: error
-
-    this%has_error_ = .true.
-    this%error = error
-
-  end subroutine status_set_error
-
-
-  ! Clears the status (if it contains an error, it will be canceled).
-  subroutine status_clear(this)
-    class(status), intent(inout) :: this
-
-    this%has_error_ = .false.
-    if (allocated(this%error)) then
-      deallocate(this%error)
-    end if
-
-  end subroutine status_clear
-
-
-  ! Checks, whether status contains an error
-  function status_has_error(this) result(has_error)
-    class(status), intent(in) :: this
-    logical :: has_error
-
-    has_error = this%has_error_
-
-  end function status_has_error
-
-
-  ! Checks, whether status is clear (no error raised)
-  function status_is_clear(this) result(is_clear)
-    class(status), intent(in) :: this
-    logical :: is_clear
-
-    is_clear = this%has_error_
-
-  end function status_is_clear
-
-
-  ! Finalizes status and stops the code, if it is not clear.
-  subroutine status_final(this)
-    type(status), intent(inout) :: this
-
-    if (this%has_error_) then
-      error stop "Unhandled error found"
-    end if
-
-  end subroutine status_final
-
-
-  ! Constructs a general error instance.
-  function construct_general_error(msg) result(this)
+  pure subroutine init_critical_error(this, msg)
+    type(critical_error), intent(out) :: this
     character(*), intent(in) :: msg
-    type(general_error) :: this
 
-    this%msg = msg
+    this%msg_ = msg
+    this%active_ = .true.
 
-  end function construct_general_error
+  end subroutine init_critical_error
+
+
+  ! Finalizer for a critical error. Stops the code if the error is still active.
+  pure subroutine critical_error_final(this)
+    type(critical_error), intent(inout) :: this
+
+    character(:), allocatable :: errormsg
+
+    if (this%active_) then
+      errormsg = "Stopping due to unhandled critical error: " // this%as_char()
+      error stop errormsg
+    end if
+
+  end subroutine critical_error_final
+
+
+  ! Returns the character representation (the error message) of an error.
+  !
+  ! Should be overriden in derived classes, if further information is available.
+  !
+  pure function critical_error_as_char(this) result(charrep)
+    class(critical_error), intent(in) :: this
+    character(:), allocatable :: charrep
+
+    charrep = this%msg_
+
+  end function critical_error_as_char
+
+
+  ! Activates the error (active errors stop the code if going out of scope)
+  pure subroutine critical_error_activate(this)
+    class(critical_error), intent(inout) :: this
+
+    this%active_ = .true.
+
+  end subroutine critical_error_activate
+
+
+  ! Deactivates the error (error would not stop the code if going out of scope)
+  pure subroutine critical_error_deactivate(this)
+    class(critical_error), intent(inout) :: this
+
+    this%active_ = .false.
+
+  end subroutine critical_error_deactivate
+
+
+  ! Queries, whether the error is currently active.
+  pure function critical_error_is_active(this) result(isactive)
+    class(critical_error), intent(in) :: this
+    logical :: isactive
+
+    isactive = this%active_
+
+  end function critical_error_is_active
 
 
   ! Constructs an os_error instance.
-  function construct_os_error(msg) result(this)
+  pure subroutine init_os_error(this, msg)
+    type(os_error), intent(out) :: this
     character(*), intent(in) :: msg
-    type(os_error) :: this
 
-    this%general_error = general_error(msg)
+    call init(this%critical_error, msg)
 
-  end function construct_os_error
+  end subroutine init_os_error
 
 
   ! Constructs a num_error instance.
-  function construct_num_error(msg) result(this)
+  subroutine init_num_error(this, msg)
+    type(num_error), intent(out) :: this
     character(*), intent(in) :: msg
-    type(num_error) :: this
 
-    this%general_error = general_error(msg)
+    call init(this%critical_error, msg)
 
-  end function construct_num_error
-
+  end subroutine init_num_error
 
 end module fxerror

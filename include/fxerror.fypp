@@ -1,31 +1,47 @@
 #:mute
 
-#:def handle_error(code, **kwargs)
+#:def handle_error_type(errortype, errorvar, code, *args)
+  #:assert len(args) == 0 or len(args) == 1
   block
-    type(status) :: stat
+    type(${errortype}$), allocatable :: ${errorvar}$
     $:code
-    if (stat%has_error()) then
-      select type (error => stat%error)
-      #:for errtype, handlercode in kwargs.items()
-        class is (${errtype}$)
+    #:if len(args)
+      if (allocated(error)) then
+        $:args[0]
+        call ${errorvar}$%deactivate()
+      end if
+    #:endif
+  end block
+#:enddef
+    
+
+#:def handle_error_class(errorclass, errorvar, code, **kwargs)
+  block
+    class(${errorclass}$), allocatable :: ${errorvar}$
+    $:code
+    if (allocated(${errorvar}$)) then
+      select type (${errorvar}$)
+      #:for errclass, handlercode in kwargs.items()
+        class is (${errclass}$)
           $:handlercode
-          call stat%clear()
       #:endfor
       end select
+      call ${errorvar}$%deactivate()
     end if
   end block
 #:enddef
 
 
-#:def propagate_error()
-  if (stat%has_error()) then
+#:def propagate_error(errorvar)
+  if (allocated(${errorvar}$)) then
     return
   end if
 #:enddef
 
 
-#:def raise_error(error)
-  call stat%set_error(${error}$)
+#:def raise_error(errorvar, *args)
+  allocate(${errorvar}$)
+  call init(${errorvar}$, ${", ".join(args)}$)
   return
 #:enddef
 
