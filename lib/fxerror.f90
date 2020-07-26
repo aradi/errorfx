@@ -11,7 +11,7 @@ module fxerror
   ! Base class for critical errors (stops code if unhandled error goes out of scope)
   type :: critical_error
     logical, private :: active_ = .false.
-    character(:), allocatable, private :: msg_
+    character(:), allocatable :: msg
   contains
     procedure :: as_char => critical_error_as_char
     procedure :: activate => critical_error_activate
@@ -43,7 +43,7 @@ contains
     type(critical_error), intent(out) :: this
     character(*), intent(in) :: msg
 
-    this%msg_ = msg
+    this%msg = msg
     this%active_ = .true.
 
   end subroutine init_critical_error
@@ -71,7 +71,7 @@ contains
     class(critical_error), intent(in) :: this
     character(:), allocatable :: charrep
 
-    charrep = this%msg_
+    charrep = this%msg
 
   end function critical_error_as_char
 
