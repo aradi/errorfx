@@ -10,6 +10,9 @@ option(WITH_FYPP "Whether Fypp preprocessor should be used" TRUE)
 
 set(FYPP_FLAGS "-I${CMAKE_SOURCE_DIR}/include" CACHE STRING "Flag to pass to the Fypp preprocessor")
 
+set(FYPP_BUILD_FLAGS
+  "${FYPP_FLAGS}" "$<IF:$<CONFIG:Debug>,-DRECORD_PROPAGATION=True,-DRECORD_PROPAGATION=False>")
+
 
 if(WITH_FYPP)
   find_program(FYPP fypp)

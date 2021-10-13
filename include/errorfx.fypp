@@ -1,5 +1,7 @@
 #:mute
 
+#:set RECORD_PROPAGATION = getvar("RECORD_PROPAGATION", False)
+
 #:def catch_error(errorvar, handlercode)
   if (allocated(${errorvar}$)) then
     call ${errorvar}$%deactivate()
@@ -35,6 +37,9 @@
 
 #:def propagate_error(errorvar)
   if (allocated(${errorvar}$)) then
+    #:if RECORD_PROPAGATION
+      call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+    #:endif
     return
   end if
 #:enddef
@@ -43,16 +48,22 @@
 #:def throw_error(errorvar, **argdict)
   #:set arglist = ", ".join(["{}={}".format(key, val) for key, val in argdict.items()])
   call create(${errorvar}$, ${arglist}$)
+  #:if RECORD_PROPAGATION
+    call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+  #:endif
   return
 #:enddef
 
 
-#:def throw_error_class(errovar, errorclass, **argdict)
+#:def throw_error_class(errorvar, errorclass, **argdict)
   #:set arglist = ", ".join(["{}={}".format(key, val) for key, val in argdict.items()])
   block
-    type(${errorclass}$), allocatable :: ${errovar}$_typed
-    call create(${errovar}$_typed, ${arglist}$)
-    call move_alloc(${errovar}$_typed, ${errovar}$)
+    type(${errorclass}$), allocatable :: ${errorvar}$_typed
+    call create(${errorvar}$_typed, ${arglist}$)
+    call move_alloc(${errorvar}$_typed, ${errorvar}$)
+    #:if RECORD_PROPAGATION
+      call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+    #:endif
     return
   end block
 #:enddef

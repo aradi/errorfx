@@ -24,7 +24,8 @@ endforeach()
 
 if(WITH_FYPP)
     foreach(fypp-example IN LISTS fypp-examples)
-        preprocess("${FYPP}" "${FYPP_FLAGS}" "fpp" "f90" "${fypp-example}.fpp" fypp-example-f90)
+        preprocess(
+            "${FYPP}" "${FYPP_BUILD_FLAGS}" "fpp" "f90" "${fypp-example}.fpp" fypp-example-f90)
         add_executable(${fypp-example} ${fypp-example-f90} ${common-sources})
         target_link_libraries(${fypp-example} PRIVATE errorfx)
     endforeach()
