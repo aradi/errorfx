@@ -2,9 +2,7 @@ program ignore_unactivated
   use errorfx, only : fatal_error
   implicit none
 
-  print *, "Ignoring an unactivated error:"
   call main()
-  print *, "Done."
 
 contains
 

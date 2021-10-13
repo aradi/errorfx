@@ -20,12 +20,12 @@ contains
       select type (error)
       class is (io_error)
         call error%deactivate()
-        print *, "IO Error found: ", error%message
+        print "(2a)", "IO Error found: ", error%message
       class is (linalg_error)
         call error%deactivate()
-        print *, "Linear algebra error found: ", error%message
+        print "(2a)", "Linear algebra error found: ", error%message
       class default
-        print *, "Thrown error had not been handled by this block"
+        print "(a)", "Thrown error had not been handled by this block"
       end select
       if (.not. error%is_active()) deallocate(error)
     end if
@@ -33,13 +33,13 @@ contains
   end subroutine main
 
 
-  ! A routine, which may emit different error-types. (The actual implementation will a linalg_error)
+  ! A routine, which may throw different error-types. (The actual implementation throws
+  ! linalg_error)
 
   subroutine routine1(error)
     class(fatal_error), allocatable, intent(out) :: error
 
     call routine2(error)
-    ! Wrapping the specific error type routine2() returned into the general one and propagating it
     if (allocated(error)) return
     print "(a)", "if you see this, routine2() did not throw any errors"
 

@@ -29,7 +29,7 @@ contains
 
     call routine2(error)
     ! We do not handle the error, just propagate it upwards
-    if (allocated(error)) return
+    @:propagate_error(error)
     print "(a)", "if you see this, routine2 returned without error"
 
   end subroutine routine1

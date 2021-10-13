@@ -9,7 +9,7 @@ program catch_error_fypp
 contains
 
   ! A routine is called, which may throw an error (in this case it does). In case an error occured
-  ! it will be handled, so it won't do any harm when going out of scope.
+  ! it will be caught/handled, so it won't do any harm when going out of scope.
 
   subroutine main()
 
@@ -26,6 +26,7 @@ contains
   subroutine routine1(error)
     type(fatal_error), allocatable, intent(out) :: error
 
+    ! Creating and throwing an error
     @:throw_error(error, message="Error created in routine1")
     print "(a)", "you shoud not see this, as we returned due to an error already"
 

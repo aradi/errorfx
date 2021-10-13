@@ -1,21 +1,21 @@
-********
-FX-Error
-********
+*******
+ErrorFx
+*******
 
-Demonstration project for an error handling strategy in modern Fortran. It
-provides an error handling mechanism which is
+Simple library for demonstrating exception like error handling strategy in
+Fortran. It provides an error handling mechanism which is
 
 * robust: An unhandled error stops the code automatically,
 
-* convenient: propagation of errors through call stack is possible,
+* convenient: propagation of errors through call stack is easily possible,
 
 * pure: it only requires Fortran 2008 constructs.
 
-It is written in pure Fortran 2008, but using Fypp-constructs can help to
-simplify its usage somewhat. See the `app/test_errorfx.f90
-<app/test_errorfx.f90>`_ and `app/test_errorfx_fypp.fpp
-<app/test_errorfx_fypp.fpp>`_ for an example with and without Fypp constructs,
-respectively.
+It is written in pure Fortran 2008, but Fypp-constructs can help to
+simplify its usage even further. See the `<examples>`_ folder for various
+examples. The ``*.f90`` files are written in pure Fortran, while their
+``*_fypp.fpp`` equivalent are demonstrating the same functionality using also
+Fypp-macros for more convenience and more compact code.
 
 
 Building
@@ -28,7 +28,8 @@ Use the usual CMake workflow to build the project::
   cmake ..
   make
 
-The executables cann be found in the `./app` folder after the build.
+The executables built from the examples can be found in the `./examples` folder
+in the build directory.
 
 You need the `Fypp preprocessor <https://github.com/aradi/fypp>`_ to build the
 Fypp-based example. If you want to build the project without the Fypp-based

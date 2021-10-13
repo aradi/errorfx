@@ -20,10 +20,10 @@ contains
     call routine1(error)
     #:block catch_error_class("error")
     #:contains io_error
-        print *, "IO Error found: ", error%message
+        print "(2a)", "IO Error found: ", error%message
     #:contains linalg_error
-        print *, "Linear algebra error found: ", error%message
-        print *, "Additional info:", error%info
+        print "(2a)", "Linear algebra error found: ", error%message
+        print "(a,i0)", "Additional info: ", error%info
     #:endblock
 
   end subroutine main

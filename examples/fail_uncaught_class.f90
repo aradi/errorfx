@@ -21,12 +21,12 @@ contains
       select type (error)
       class is (io_error)
         call error%deactivate()
-        print *, "IO Error found: ", error%message
+        print "(2a)", "IO Error found: ", error%message
       !class is (linalg_error)
       !  call error%deactivate()
-      !  print *, "Linear algebra error found: ", error%message
+      !  print "(2a)", "Linear algebra error found: ", error%message
       class default
-        print *, "Thrown error had not been handled by this block"
+        print "(a)", "Thrown error had not been handled by this block"
       end select
       if (.not. error%is_active()) deallocate(error)
     end if
