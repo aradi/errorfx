@@ -12,9 +12,9 @@ provides an error handling mechanism which is
 * pure: it only requires Fortran 2008 constructs.
 
 It is written in pure Fortran 2008, but using Fypp-constructs can help to
-simplify its usage somewhat. See the `app/test_fxerror.f90
-<app/test_fxerror.f90>`_ and `app/test_fxerror_fypp.fpp
-<app/test_fxerror_fypp.fpp>`_ for an example with and without Fypp constructs,
+simplify its usage somewhat. See the `app/test_errorfx.f90
+<app/test_errorfx.f90>`_ and `app/test_errorfx_fypp.fpp
+<app/test_errorfx_fypp.fpp>`_ for an example with and without Fypp constructs,
 respectively.
 
 
@@ -29,7 +29,7 @@ Use the usual CMake workflow to build the project::
   make
 
 The executables cann be found in the `./app` folder after the build.
-  
+
 You need the `Fypp preprocessor <https://github.com/aradi/fypp>`_ to build the
 Fypp-based example. If you want to build the project without the Fypp-based
 example, pass the ``-DWITH_FYPP=NO`` option to CMake.

@@ -14,9 +14,9 @@ set(FYPP_FLAGS "-I${CMAKE_SOURCE_DIR}/include" CACHE STRING "Flag to pass to the
 if(WITH_FYPP)
   find_program(FYPP fypp)
   if(NOT FYPP)
-    message(FATAL_ERROR "Preprocessor fypp not found")
+    message(fatal_error "Preprocessor fypp not found")
   endif()
 endif()
 
-add_subdirectory(lib)
-add_subdirectory(app)
+add_subdirectory(src)
+add_subdirectory(examples)
