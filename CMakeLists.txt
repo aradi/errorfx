@@ -12,7 +12,9 @@ set(FYPP_FLAGS "-I${CMAKE_SOURCE_DIR}/include" CACHE STRING "Flag to pass to the
 
 set(FYPP_BUILD_FLAGS
   "${FYPP_FLAGS}" "$<IF:$<CONFIG:Debug>,-DRECORD_PROPAGATION=True,-DRECORD_PROPAGATION=False>")
-
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  set(FYPP_BUILD_FLAGS "${FYPP_BUILD_FLAGS}" "-n")
+endif()
 
 if(WITH_FYPP)
   find_program(FYPP fypp)
