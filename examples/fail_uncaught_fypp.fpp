@@ -23,7 +23,7 @@ contains
   subroutine routine1(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    @:throw_error(error, message="An error occured in routine1()")
+    @:throw(error, message="An error occured in routine1()")
 
   end subroutine routine1
 

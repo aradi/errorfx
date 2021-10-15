@@ -1,9 +1,8 @@
-program catch_error_class
+module catch_class
   use errorfx, only : fatal_error, create
-  use error_extension, only : io_error, linalg_error, create
+  use error_extension, only : io_error, linalg_error, create, catch_io_error_class,&
+      & catch_linalg_error_class
   implicit none
-
-  call main()
 
 contains
 
@@ -15,6 +14,12 @@ contains
     ! Note, this is now defined as class, not as type to accomodate multiple error types
     class(fatal_error), allocatable :: error
 
+    ! Handling the error using error handling routines
+    call routine1(error)
+    call catch_io_error_class(error, handle_io_error)
+    call catch_linalg_error_class(error, handle_linalg_error)
+
+    ! Handling the error with manual deactivation and deallocation
     call routine1(error)
     if (allocated(error)) then
       select type (error)
@@ -29,6 +34,27 @@ contains
       end select
       if (.not. error%is_active()) deallocate(error)
     end if
+
+
+  contains
+
+    ! Handler for io error
+    subroutine handle_io_error(error)
+      class(io_error), intent(in) :: error
+
+      print "(2a)", "IO Error found: ", error%message
+
+    end subroutine handle_io_error
+
+
+    ! Handler for linalg error
+    subroutine handle_linalg_error(error)
+      class(linalg_error), intent(in) :: error
+
+      print "(2a)", "Linear algebra error found: ", error%message
+
+    end subroutine handle_linalg_error
+
 
   end subroutine main
 
@@ -59,4 +85,13 @@ contains
 
   end subroutine routine2
 
-end program catch_error_class
+end module catch_class
+
+
+program catch_class_program
+  use catch_class, only : main
+  implicit none
+
+  call main()
+
+end program catch_class_program

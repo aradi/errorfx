@@ -1,8 +1,6 @@
-program propagate_error
-  use errorfx, only : fatal_error, create
+module propagate
+  use errorfx, only : fatal_error, create, catch
   implicit none
-
-  call main()
 
 contains
 
@@ -15,11 +13,16 @@ contains
     print "(a)", "Calling routine1"
     call routine1(error)
     print "(a)", "Handling error returned by routine1"
-    if (allocated(error)) then
-      call error%deactivate()
+    call catch(error, handle_error)
+
+  contains
+
+    subroutine handle_error(error)
+      type(fatal_error), intent(in) :: error
+
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
-      deallocate(error)
-    end if
+
+    end subroutine handle_error
 
   end subroutine main
 
@@ -45,4 +48,13 @@ contains
   end subroutine routine2
 
 
-end program propagate_error
+end module propagate
+
+
+program propagate_program
+  use propagate, only : main
+  implicit none
+
+  call main()
+
+end program propagate_program

@@ -4,7 +4,7 @@ module errorfx
   implicit none
 
   private
-  public :: fatal_error, create, init
+  public :: fatal_error, create, init, catch, catch_fatal_error
 
 
   type :: linked_location
@@ -60,11 +60,15 @@ module errorfx
     module procedure fatal_error_init
   end interface init
 
-
   !> Allocates and initializes an error
   interface create
     module procedure fatal_error_create
   end interface create
+
+  !> Catches a specific error type (not class) and exectues an error handling subroutine
+  interface catch
+    module procedure catch_fatal_error
+  end interface catch
 
 
 contains
@@ -191,6 +195,69 @@ contains
     write(unit, "(a, ':', i0)") this%file, this%line
 
   end subroutine linked_location_write_formatted
+
+
+  !> Catches a fatal_error and executes an error handler
+  subroutine catch_fatal_error(error, errorhandler)
+
+    !> Error to catch
+    type(fatal_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: fatal_error
+        implicit none
+
+        !> Error which was caught
+        type(fatal_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    call error%deactivate()
+    call errorhandler(error)
+    deallocate(error)
+
+  end subroutine catch_fatal_error
+
+
+  !> Catches a generic error class and executes an error handler
+  subroutine catch_fatal_error_class(error, errorhandler)
+
+    !> Error to catch
+    class(fatal_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: fatal_error
+        implicit none
+
+        !> Error which was caught
+        class(fatal_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    logical :: caught
+
+    caught = .false.
+    if (allocated(error)) then
+      select type (error)
+      class is (fatal_error)
+        call error%deactivate()
+        call errorhandler(error)
+        caught = .true.
+      end select
+      if (caught) deallocate(error)
+    end if
+
+  end subroutine catch_fatal_error_class
 
 
 end module errorfx

@@ -1,3 +1,5 @@
+.. highlight:: fortran
+
 *******
 ErrorFx
 *******
@@ -103,7 +105,7 @@ Throwing an error
 Throwing an error consists of allocation, filling information, activation and
 returning as explained above. ErrorFx offers convenience functions to
 make this as simple as possible, so that you only have to write
-[`<examples/catch_error.f90>`_] ::
+[`<examples/catch.f90>`_] ::
 
   subroutine routine_with_possible_error(..., error)
     :
@@ -116,14 +118,14 @@ make this as simple as possible, so that you only have to write
   end subroutine routine_with_possible_error
 
 If you happen to use Fypp, you can further simplify the code, by writing
-[`<examples/catch_error_fypp.fpp>`_]::
+[`<examples/catch_fypp.fpp>`_]::
 
   subroutine routine_with_possible_error(..., error)
     :
     type(fatal_error), allocatable, intent(out) :: error
     :
     ! Creating and throwing an error (activation included)
-    @:throw_error(error, message="Error created in routine_with_possible_error")
+    @:throw(error, message="Error created in routine_with_possible_error")
 
   end subroutine routine_with_possible_error
 
@@ -156,7 +158,7 @@ Again, you can use some Fypp magic to be more descriptive [`<examples/propagate_
     :
     call routine_with_possible_error(..., error)
     ! If error happend, we propagate it upwards, otherwise we continue
-    @:propagate_error(error)
+    @:propagate(error)
     print "(a)", "Apparently no error occured"
     :
   end subroutine routine_propagating_error
@@ -167,7 +169,7 @@ Catching an error
 
 If you do not want to propagate the error upwards, you have to handle it
 locally, deactivate it (and eventually also deallocate it). The corresponding
-catching pattern in ErrorFx would look as [`<examples/catch_error.f90>`_] ::
+catching pattern in ErrorFx would look as [`<examples/catch.f90>`_] ::
 
     call routine_with_possible_error(..., error)
     if (allocated(error)) then
@@ -177,11 +179,41 @@ catching pattern in ErrorFx would look as [`<examples/catch_error.f90>`_] ::
       deallocate(error)
     end if
 
-And of course, with Fypp you can write it a lot more compact and descriptive as
-[`<examples/catch_error_fypp.fpp>`_]::
+As this "manual" error handling is somewhat error prone (you may forget do deactivate or
+deallocate), ErroFx offers you the possibility to catch the error by invoking an error handling
+routine [`<examples/catch.f90>`_]::
+
+  subroutine main()
+
+    type(fatal_error), allocatable :: error
 
     call routine_with_possible_error(..., error)
-    #:block catch_error("error")
+    call catch(error, error_handler)
+    :
+
+  contains
+
+    subroutine error_handler(error)
+      type(fatal_error), intent(in) :: error
+
+      ! Do whatever is needed to resolve the error
+      print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
+
+    end subroutine error_handler
+
+  end subroutine main
+
+The error handler routine can be an arbitrary subroutine, which takes the thrown
+error type as ``intent(in)`` argument. If it is an internal subroutine, it will
+even have access to all variables of the hosting scope (e.g. ``error_handler()``
+can access all variables defined in ``main()`` above).
+
+Of course, with Fypp you can write a compact, robust and descriptive error
+catching construct without the need for explicit error handling routines
+[`<examples/catch_fypp.fpp>`_]::
+
+    call routine_with_possible_error(..., error)
+    #:block catch("error")
       ! Do whatever is needed to resolve the error
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
     #:endblock
@@ -260,7 +292,9 @@ does, or because you wish to differentiate between errors based on their class
 
 The extension is straightforward. The following example demonstrates, how an I/O
 error could be introduced, which also contains the filename and the unit
-associated with the I/O problems. [`<examples/error_extension.f90>`_] ::
+associated with the I/O problems. Appart of the type extension, one should also
+provide convenience function to catch an error of the extended type and of the
+extended class [`<examples/error_extension.f90>`_]::
 
   module error_extension
     use errorfx, only : fatal_error, init
@@ -268,6 +302,7 @@ associated with the I/O problems. [`<examples/error_extension.f90>`_] ::
 
     private
     public :: io_error, init, create
+    public :: catch, catch_io_error_class
 
     !> Specific I/O error created by extending the general type
     type, extends(fatal_error) :: io_error
@@ -280,10 +315,15 @@ associated with the I/O problems. [`<examples/error_extension.f90>`_] ::
       module procedure io_error_init
     end interface init
 
-    !> Error creator (use those routines to create an error in the code)
+    !> Error creator (use to create an error in the code)
     interface create
       module procedure io_error_create
     end interface create
+
+    !> Catches specific error types
+    interface catch
+      module procedure catch_io_error
+    end interface catch
 
   contains
 
@@ -319,6 +359,49 @@ associated with the I/O problems. [`<examples/error_extension.f90>`_] ::
 
     end subroutine io_error_init
 
+
+    !> Catches an io_error and executes an error handler
+    subroutine catch_io_error(error, errorhandler)
+      type(io_error), allocatable, intent(inout) :: error
+      interface
+        subroutine errorhandler(error)
+          import :: io_error
+          type(io_error), intent(in) :: error
+        end subroutine errorhandler
+      end interface
+
+      call error%deactivate()
+      call errorhandler(error)
+      deallocate(error)
+
+    end subroutine catch_io_error
+
+
+    !> Catches a generic error class and executes an error handler
+    subroutine catch_io_error_class(error, errorhandler)
+      class(fatal_error), allocatable, intent(inout) :: error
+      interface
+        subroutine errorhandler(error)
+          import :: io_error
+          class(io_error), intent(in) :: error
+        end subroutine errorhandler
+      end interface
+
+      logical :: caught
+
+      if (allocated(error)) then
+        caught = .false.
+        select type (error)
+        class is (io_error)
+          call error%deactivate()
+          call errorhandler(error)
+          caught = .true.
+        end select
+        if (caught) deallocate(error)
+      end if
+
+    end subroutine catch_io_error_class
+
   end module error_extension
 
 
@@ -328,7 +411,36 @@ variables instead of ``type(fatal_error)``. Additionally the ``select type``
 construct can be used to find out which actual error subclass was thrown.
 Let's assume that two extending error types ``io_error`` and ``linalg_error``
 had been created, a pattern, which can distinguish between the two would look
-as [`<examples/catch_error_class.f90>`_]::
+as [`<examples/catch_class.f90>`_]::
+
+    class(fatal_error), allocatable :: error
+
+    call routine_throwing_error(..., error)
+    call catch_io_error_class(error, handle_io_error)
+    call catch_linalg_error_class(error, handle_linalg_error)
+
+  contains
+
+    ! Handler for io error
+    subroutine handle_io_error(error)
+      class(io_error), intent(in) :: error
+
+      print "(2a)", "IO Error found: ", error%message
+
+    end subroutine handle_io_error
+
+
+    ! Handler for linalg error
+    subroutine handle_linalg_error(error)
+      class(linalg_error), intent(in) :: error
+
+      print "(2a)", "Linear algebra error found: ", error%message
+
+    end subroutine handle_linalg_error
+
+
+Alternatively, with manual deactivation and deallocation without explicit
+error handler routines::
 
     class(fatal_error), allocatable :: error
 
@@ -347,12 +459,12 @@ as [`<examples/catch_error_class.f90>`_]::
       if (.not. error%is_active()) deallocate(error)
     end if
 
-Or in the more compact Fypp-form [`<examples/catch_error_class_fypp.fpp>`_]::
+Or in the more compact Fypp-form [`<examples/catch_class_fypp.fpp>`_]::
 
     class(fatal_error), allocatable :: error
 
     call routine_throwing_error(..., error)
-    #:block catch_error_class("error")
+    #:block catch_class("error")
     #:contains io_error
         print "(2a)", "IO Error found: ", error%message
     #:contains linalg_error
@@ -382,7 +494,7 @@ When using Fypp, it reduces to ::
 
     type(io_error), allocatable :: ioerr
 
-    @:throw_error_class(ioerr, io_error, message="Failed to open file", filename="test.dat")
+    @:throw_class(ioerr, io_error, message="Failed to open file", filename="test.dat")
     print "(a)", "you should not see this as an error was thrown before"
 
   end subroutine routine_throwing_error

@@ -2,7 +2,7 @@
 
 #:set RECORD_PROPAGATION = getvar("RECORD_PROPAGATION", False)
 
-#:def catch_error(errorvar, handlercode)
+#:def catch(errorvar, handlercode)
   if (allocated(${errorvar}$)) then
     call ${errorvar}$%deactivate()
     block
@@ -13,7 +13,7 @@
 #:enddef
 
 
-#:def catch_error_class(errorvar, **errorclasses)
+#:def catch_class(errorvar, **errorclasses)
   if (allocated(${errorvar}$)) then
     block
       logical :: errorfx_handled
@@ -35,7 +35,7 @@
 #:enddef
 
 
-#:def propagate_error(errorvar)
+#:def propagate(errorvar)
   if (allocated(${errorvar}$)) then
     #:if RECORD_PROPAGATION
       call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
@@ -45,7 +45,7 @@
 #:enddef
 
 
-#:def throw_error(errorvar, **argdict)
+#:def throw(errorvar, **argdict)
   #:set arglist = ", ".join(["{}={}".format(key, val) for key, val in argdict.items()])
   call create(${errorvar}$, ${arglist}$)
   #:if RECORD_PROPAGATION
@@ -55,7 +55,7 @@
 #:enddef
 
 
-#:def throw_error_class(errorvar, errorclass, **argdict)
+#:def throw_class(errorvar, errorclass, **argdict)
   #:set arglist = ", ".join(["{}={}".format(key, val) for key, val in argdict.items()])
   block
     type(${errorclass}$), allocatable :: ${errorvar}$_typed

@@ -1,11 +1,11 @@
 !> Extension of the original error type for creating more specific error types
-!>
 module error_extension
   use errorfx, only : fatal_error, init
   implicit none
 
   private
   public :: io_error, linalg_error, init, create
+  public :: catch, catch_io_error_class, catch_linalg_error_class
 
 
   !> Specific I/O error created by extending the general type
@@ -39,6 +39,12 @@ module error_extension
   interface create
     module procedure io_error_create, linalg_error_create
   end interface create
+
+
+  !> Catches specific error types
+  interface catch
+    module procedure catch_io_error, catch_linalg_error
+  end interface catch
 
 
 contains
@@ -96,6 +102,69 @@ contains
   end subroutine io_error_init
 
 
+  !> Catches an io_error and executes an error handler
+  subroutine catch_io_error(error, errorhandler)
+
+    !> Error to catch
+    type(io_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: io_error
+        implicit none
+
+        !> Error which was caught
+        type(io_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    call error%deactivate()
+    call errorhandler(error)
+    deallocate(error)
+
+  end subroutine catch_io_error
+
+
+  !> Catches a generic error class and executes an error handler
+  subroutine catch_io_error_class(error, errorhandler)
+
+    !> Error to catch
+    class(fatal_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: io_error
+        implicit none
+
+        !> Error which was caught
+        class(io_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    logical :: caught
+
+    if (allocated(error)) then
+      caught = .false.
+      select type (error)
+      class is (io_error)
+        call error%deactivate()
+        call errorhandler(error)
+        caught = .true.
+      end select
+      if (caught) deallocate(error)
+    end if
+
+  end subroutine catch_io_error_class
+
+
   !> Creates a linear algebra error
   pure subroutine linalg_error_create(this, code, message, info)
 
@@ -138,5 +207,68 @@ contains
     end if
 
   end subroutine linalg_error_init
+
+
+  !> Catches an linalg_error and executes an error handler
+  subroutine catch_linalg_error(error, errorhandler)
+
+    !> Error to catch
+    type(linalg_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: linalg_error
+        implicit none
+
+        !> Error which was caught
+        type(linalg_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    call error%deactivate()
+    call errorhandler(error)
+    deallocate(error)
+
+  end subroutine catch_linalg_error
+
+
+  !> Catches a generic error class and executes an error handler
+  subroutine catch_linalg_error_class(error, errorhandler)
+
+    !> Error to catch
+    class(fatal_error), allocatable, intent(inout) :: error
+
+    interface
+
+      !> Error handler routine
+      subroutine errorhandler(error)
+        import :: linalg_error
+        implicit none
+
+        !> Error which was caught
+        class(linalg_error), intent(in) :: error
+
+      end subroutine errorhandler
+
+    end interface
+
+    logical :: caught
+
+    if (allocated(error)) then
+      caught = .false.
+      select type (error)
+      class is (linalg_error)
+        call error%deactivate()
+        call errorhandler(error)
+        caught = .true.
+      end select
+      if (caught) deallocate(error)
+    end if
+
+  end subroutine catch_linalg_error_class
 
 end module error_extension

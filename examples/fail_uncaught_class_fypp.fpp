@@ -19,7 +19,7 @@ contains
     class(fatal_error), allocatable :: error
 
     call routine1(error)
-    #:block catch_error_class("error")
+    #:block catch_class("error")
     #:contains io_error
         print "(2a)", "IO Error found: ", error%message
     #!#:contains linalg_error
@@ -36,7 +36,7 @@ contains
     class(fatal_error), allocatable, intent(out) :: error
 
     call routine2(error)
-    @:propagate_error(error)
+    @:propagate(error)
     print "(a)", "if you see this, routine2() did not throw any errors"
 
   end subroutine routine1
@@ -47,7 +47,7 @@ contains
 
     type(linalg_error), allocatable :: linalgerr
 
-    @:throw_error_class(error, linalg_error, &
+    @:throw_class(error, linalg_error, &
         & message="Matrix is not positive definite", code=-1, info=12)
     print "(a)", "you should not see this, as routine2 throwed an error and returned"
 
