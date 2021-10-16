@@ -1,5 +1,5 @@
 module catch_module
-  use errorfx, only : fatal_error, create, catch
+  use errorfx, only : fatal_error, create, destroy, catch
   implicit none
 
 contains
@@ -15,7 +15,15 @@ contains
     call routine1(error)
     call catch(error, handle_error)
 
-    ! Handling the error with manual deactivation and deallocation
+    ! Handling the error with manual destruction. Leaving the scope during the error handling
+    ! before the ``destroy(error)`` call would trigger an error stop!
+    call routine1(error)
+    if (allocated(error)) then
+      print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
+      call destroy(error)
+    end if
+
+    ! Handling the error with separated deactivation and deallocation
     call routine1(error)
     if (allocated(error)) then
       call error%deactivate()

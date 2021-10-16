@@ -179,9 +179,27 @@ catching pattern in ErrorFx would look as [`<examples/catch.f90>`_] ::
       deallocate(error)
     end if
 
-As this "manual" error handling is somewhat error prone (you may forget do deactivate or
-deallocate), ErroFx offers you the possibility to catch the error by invoking an error handling
-routine [`<examples/catch.f90>`_]::
+Doing the deactivation (``call error%deactivate()``) as the very first step
+warranties, that the pattern works also in those cases, where you leave the
+scope (e.g. via ``return``) during the error handling. If the error handling
+code does not leave the scope, you can do the deactivation and deallocation
+together at the end of the error handling block using the convenience
+routine ``destroy()``::
+
+    call routine_with_possible_error(..., error)
+    if (allocated(error)) then
+      ! Do whatever is needed to resolve the error
+      ! Make sure you do not leave the scope, as the error is still active!
+      print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
+      ! Deactivate and destroy in one step
+      call destroy(error)
+    end if
+
+As the "manual" error handling is somewhat error prone (you may forget to
+deactivate or deallocate), ErroFx offers you the possibility to handle the error
+via a dedicated (internal or external) subroutine. The library will first
+deactivate the error, then call the error handling routine and finally
+deallocate the error [`<examples/catch.f90>`_]::
 
   subroutine main()
 
@@ -197,6 +215,7 @@ routine [`<examples/catch.f90>`_]::
       type(fatal_error), intent(in) :: error
 
       ! Do whatever is needed to resolve the error
+      ! (Deactivation/deallocation is done by the library automatically.)
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
 
     end subroutine error_handler
@@ -209,7 +228,7 @@ even have access to all variables of the hosting scope (e.g. ``error_handler()``
 can access all variables defined in ``main()`` above).
 
 Of course, with Fypp you can write a compact, robust and descriptive error
-catching construct without the need for explicit error handling routines
+catching construct even without explicit error handling routines as
 [`<examples/catch_fypp.fpp>`_]::
 
     call routine_with_possible_error(..., error)

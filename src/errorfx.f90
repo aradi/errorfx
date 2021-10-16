@@ -4,7 +4,7 @@ module errorfx
   implicit none
 
   private
-  public :: fatal_error, create, init, catch, catch_fatal_error
+  public :: fatal_error, create, init, catch, destroy, catch_fatal_error
 
 
   type :: linked_location
@@ -73,6 +73,13 @@ module errorfx
     module procedure catch_fatal_error
   end interface catch
 
+  !> Deactivates and deallocates an error
+  !>
+  !> It does not need to be recreated by extending type, as it works on class(fatal_error)
+  interface destroy
+    module procedure destroy_fatal_error_class
+  end interface
+
 
 contains
 
@@ -111,6 +118,20 @@ contains
     call this%activate()
 
   end subroutine fatal_error_init
+
+
+  !> Destroys an error explicitely (after deactivating it)
+  subroutine destroy_fatal_error_class(this)
+
+    !> Existing instance, unallocated on exit
+    type(fatal_error), allocatable, intent(inout) :: this
+
+    if (allocated(this)) then
+      call this%deactivate()
+      deallocate(this)
+    end if
+
+  end subroutine destroy_fatal_error_class
 
 
   !> Finalizer for a critical error. Stops the code if the error is still active.
