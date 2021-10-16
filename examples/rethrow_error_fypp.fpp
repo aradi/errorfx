@@ -1,7 +1,7 @@
 #:include "errorfx.fypp"
 
-module rethrow_error
-  use errorfx, only : fatal_error, create, catch
+module rethrow_error_fypp
+  use errorfx, only : fatal_error, create_error, catch_error
   implicit none
 
 contains
@@ -15,7 +15,7 @@ contains
     print "(a)", "Calling routine1"
     call routine1(error)
     print "(a)", "Handling error returned by routine1"
-    #:block catch("error")
+    #:block catch_error("error")
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
     #:endblock
 
@@ -26,13 +26,13 @@ contains
     type(fatal_error), allocatable, intent(out) :: error
 
     call routine2(error)
-    #:block catch("error")
+    #:block catch_error("error")
       ! Pattern for reraising an error.
       ! We inspect the error here
       print "(a,a,a,i0,a)", "Handling error: '", error%message, "' (code: ", error%code, ")"
       ! We can not handle the error, so we dedice to reraise it: we activate it again and return
       print "(a)", "Rethrowing the error"
-      @:rethrow(error)
+      @:rethrow_error(error)
     #:endblock
     print "(a)", "if you see this, routine2 returned without error"
 
@@ -42,20 +42,20 @@ contains
   subroutine routine2(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    call create(error, message="Routine2 experienced a fatal error")
+    call create_error(error, message="Routine2 experienced a fatal error")
     return
     print "(a)", "you shoud not see this, as we returned due to an error already"
 
   end subroutine routine2
 
 
-end module rethrow_error
+end module rethrow_error_fypp
 
 
-program rethrow_program
-  use rethrow_error, only : main
+program rethrow_error_fypp_program
+  use rethrow_error_fypp, only : main
   implicit none
 
   call main()
 
-end program rethrow_program
+end program rethrow_error_fypp_program

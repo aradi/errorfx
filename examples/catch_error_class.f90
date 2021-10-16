@@ -1,6 +1,6 @@
 module catch_class
-  use errorfx, only : fatal_error, create
-  use error_extension, only : io_error, linalg_error, create, catch_io_error_class,&
+  use errorfx, only : fatal_error, create_error, destroy_error_class
+  use error_extension, only : io_error, linalg_error, create_error, catch_io_error_class,&
       & catch_linalg_error_class
   implicit none
 
@@ -18,6 +18,27 @@ contains
     call routine1(error)
     call catch_io_error_class(error, handle_io_error)
     call catch_linalg_error_class(error, handle_linalg_error)
+
+    ! Handling the error with manual destruction (error hanlding code might not leave the scope)
+    call routine1(error)
+    if (allocated(error)) then
+      block
+        logical :: handled
+        handled = .false.
+        select type (error)
+        class is (io_error)
+          print "(2a)", "IO Error found: ", error%message
+          handled = .true.
+        class is (linalg_error)
+          print "(2a)", "Linear algebra error found: ", error%message
+          handled = .true.
+        class default
+          print "(a)", "Thrown error had not been handled by this block"
+        end select
+        if (handled) call destroy_error_class(error)
+      end block
+    end if
+
 
     ! Handling the error with manual deactivation and deallocation
     call routine1(error)
@@ -77,7 +98,7 @@ contains
 
     type(linalg_error), allocatable :: linalgerr
 
-    call create(linalgerr, message="Matrix is not positive definite", code=-1, info=12)
+    call create_error(linalgerr, message="Matrix is not positive definite", code=-1, info=12)
     ! Putting specific error type into generic class
     call move_alloc(linalgerr, error)
     return

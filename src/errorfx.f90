@@ -4,7 +4,8 @@ module errorfx
   implicit none
 
   private
-  public :: fatal_error, create, init, catch, destroy, catch_fatal_error
+  public :: fatal_error, fatal_error_init, catch_fatal_error_class
+  public :: create_error, catch_error, destroy_error, destroy_error_class
 
 
   type :: linked_location
@@ -55,36 +56,26 @@ module errorfx
   end type fatal_error
 
 
-  !> Initializes an error
-  !>
-  !> Use it only in init routines of extending types, otherwise use create() to create errors.
-  !>
-  interface init
-    module procedure fatal_error_init
-  end interface init
-
   !> Allocates and initializes an error
-  interface create
-    module procedure fatal_error_create
-  end interface create
+  interface create_error
+    module procedure create_fatal_error
+  end interface create_error
 
   !> Catches a specific error type (not class) and exectues an error handling subroutine
-  interface catch
+  interface catch_error
     module procedure catch_fatal_error
-  end interface catch
+  end interface catch_error
 
-  !> Deactivates and deallocates an error
-  !>
-  !> It does not need to be recreated by extending type, as it works on class(fatal_error)
-  interface destroy
-    module procedure destroy_fatal_error_class
-  end interface
+  !> Deactivates and deallocates a specific error type
+  interface destroy_error
+    module procedure destroy_fatal_error
+  end interface destroy_error
 
 
 contains
 
   !> Allocates and initializes a fatal error.
-  pure subroutine fatal_error_create(this, code, message)
+  pure subroutine create_fatal_error(this, code, message)
 
     !> Instance.
     type(fatal_error), allocatable, intent(out) :: this
@@ -98,7 +89,7 @@ contains
     allocate(this)
     call fatal_error_init(this, code=code, message=message)
 
-  end subroutine fatal_error_create
+  end subroutine create_fatal_error
 
 
   !> Initializes a fatal_error
@@ -121,7 +112,7 @@ contains
 
 
   !> Destroys an error explicitely (after deactivating it)
-  subroutine destroy_fatal_error_class(this)
+  subroutine destroy_fatal_error(this)
 
     !> Existing instance, unallocated on exit
     type(fatal_error), allocatable, intent(inout) :: this
@@ -131,7 +122,21 @@ contains
       deallocate(this)
     end if
 
-  end subroutine destroy_fatal_error_class
+  end subroutine destroy_fatal_error
+
+
+  !> Destroys an error explicitely (after deactivating it)
+  subroutine destroy_error_class(this)
+
+    !> Existing instance, unallocated on exit
+    class(fatal_error), allocatable, intent(inout) :: this
+
+    if (allocated(this)) then
+      call this%deactivate()
+      deallocate(this)
+    end if
+
+  end subroutine destroy_error_class
 
 
   !> Finalizer for a critical error. Stops the code if the error is still active.

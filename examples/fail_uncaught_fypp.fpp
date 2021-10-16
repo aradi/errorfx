@@ -1,7 +1,7 @@
 #:include "errorfx.fypp"
 
 program fail_uncaught
-  use errorfx, only : fatal_error, create
+  use errorfx, only : fatal_error, create_error
   implicit none
 
   call main()
@@ -23,7 +23,7 @@ contains
   subroutine routine1(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    @:throw(error, message="An error occured in routine1()")
+    @:throw_error(error, message="An error occured in routine1()")
 
   end subroutine routine1
 

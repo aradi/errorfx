@@ -1,5 +1,5 @@
 program fail_uncaught
-  use errorfx, only : fatal_error, create
+  use errorfx, only : fatal_error, create_error
   implicit none
 
   call main()
@@ -21,7 +21,7 @@ contains
   subroutine routine1(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    call create(error, message="An error occured in routine1()")
+    call create_error(error, message="An error occured in routine1()")
     return
 
   end subroutine routine1

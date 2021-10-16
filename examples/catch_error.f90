@@ -1,5 +1,5 @@
-module catch_module
-  use errorfx, only : fatal_error, create, destroy, catch
+module catch_error_module
+  use errorfx, only : fatal_error, create_error, destroy_error, catch_error
   implicit none
 
 contains
@@ -13,14 +13,14 @@ contains
 
     ! Handling the error using error handling routine
     call routine1(error)
-    call catch(error, handle_error)
+    call catch_error(error, handle_error)
 
     ! Handling the error with manual destruction. Leaving the scope during the error handling
     ! before the ``destroy(error)`` call would trigger an error stop!
     call routine1(error)
     if (allocated(error)) then
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
-      call destroy(error)
+      call destroy_error(error)
     end if
 
     ! Handling the error with separated deactivation and deallocation
@@ -48,19 +48,19 @@ contains
     type(fatal_error), allocatable, intent(out) :: error
 
     ! Creating and throwing an error
-    call create(error, message="Error created in routine1")
+    call create_error(error, message="Error created in routine1")
     return
     print "(a)", "you shoud not see this, as we returned due to an error already"
 
   end subroutine routine1
 
-end module catch_module
+end module catch_error_module
 
 
-program catch_program
-  use catch_module, only : main
+program catch_error_program
+  use catch_error_module, only : main
   implicit none
 
   call main()
 
-end program catch_program
+end program catch_error_program

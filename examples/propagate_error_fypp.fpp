@@ -1,7 +1,7 @@
 #:include "errorfx.fypp"
 
 program propagate
-  use errorfx, only : fatal_error, create
+  use errorfx, only : fatal_error, create_error
   implicit none
 
   call main()
@@ -17,7 +17,7 @@ contains
     print "(a)", "Calling routine1"
     call routine1(error)
     print "(a)", "Handling error returned by routine1"
-    #:block catch("error")
+    #:block catch_error("error")
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
     #:endblock
 
@@ -29,7 +29,7 @@ contains
 
     call routine2(error)
     ! We do not handle the error, just propagate it upwards
-    @:propagate(error)
+    @:propagate_error(error)
     print "(a)", "if you see this, routine2 returned without error"
 
   end subroutine routine1
@@ -38,7 +38,7 @@ contains
   subroutine routine2(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    @:throw(error, message="Routine2 experienced a fatal error")
+    @:throw_error(error, message="Routine2 experienced a fatal error")
     print "(a)", "you shoud not see this, as we returned due to an error already"
 
   end subroutine routine2

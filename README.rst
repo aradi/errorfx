@@ -112,7 +112,7 @@ make this as simple as possible, so that you only have to write
     type(fatal_error), allocatable, intent(out) :: error
     :
     ! Creating and throwing an error (activation included)
-    call create(error, message="Error created in routine_with_possible_error")
+    call create_error(error, message="Error created in routine_with_possible_error")
     return
 
   end subroutine routine_with_possible_error
@@ -125,7 +125,7 @@ If you happen to use Fypp, you can further simplify the code, by writing
     type(fatal_error), allocatable, intent(out) :: error
     :
     ! Creating and throwing an error (activation included)
-    @:throw(error, message="Error created in routine_with_possible_error")
+    @:throw_error(error, message="Error created in routine_with_possible_error")
 
   end subroutine routine_with_possible_error
 
@@ -158,7 +158,7 @@ Again, you can use some Fypp magic to be more descriptive [`<examples/propagate_
     :
     call routine_with_possible_error(..., error)
     ! If error happend, we propagate it upwards, otherwise we continue
-    @:propagate(error)
+    @:propagate_error(error)
     print "(a)", "Apparently no error occured"
     :
   end subroutine routine_propagating_error
@@ -184,7 +184,7 @@ warranties, that the pattern works also in those cases, where you leave the
 scope (e.g. via ``return``) during the error handling. If the error handling
 code does not leave the scope, you can do the deactivation and deallocation
 together at the end of the error handling block using the convenience
-routine ``destroy()``::
+routine ``destroy_error()``::
 
     call routine_with_possible_error(..., error)
     if (allocated(error)) then
@@ -192,7 +192,7 @@ routine ``destroy()``::
       ! Make sure you do not leave the scope, as the error is still active!
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
       ! Deactivate and destroy in one step
-      call destroy(error)
+      call destroy_error(error)
     end if
 
 As the "manual" error handling is somewhat error prone (you may forget to
@@ -206,7 +206,7 @@ deallocate the error [`<examples/catch.f90>`_]::
     type(fatal_error), allocatable :: error
 
     call routine_with_possible_error(..., error)
-    call catch(error, error_handler)
+    call catch_error(error, error_handler)
     :
 
   contains
@@ -227,12 +227,12 @@ error type as ``intent(in)`` argument. If it is an internal subroutine, it will
 even have access to all variables of the hosting scope (e.g. ``error_handler()``
 can access all variables defined in ``main()`` above).
 
-Of course, with Fypp you can write a compact, robust and descriptive error
+Finally, with Fypp you can write a compact, robust and descriptive error
 catching construct even without explicit error handling routines as
 [`<examples/catch_fypp.fpp>`_]::
 
     call routine_with_possible_error(..., error)
-    #:block catch("error")
+    #:block catch_error("error")
       ! Do whatever is needed to resolve the error
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
     #:endblock
@@ -269,10 +269,10 @@ The compact Fypp based analog would be ::
     type(fatal_error), allocatable, intent(out) :: error
 
     call routine_throwing_error(error)
-    #:block catch("error")
+    #:block catch_error("error")
       :
       ! Rethrowing error
-      @:rethrow(error)
+      @:rethrow_error(error)
     #:endblock
     :
 
@@ -343,10 +343,11 @@ useful, if the error was propagated upwards through several levels::
 Extending errors
 ----------------
 
-Sometimes, it may be desirable to extend the error type. Either, because
-you wish to create some errors which carry more information than the base type
-does, or because you wish to differentiate between errors based on their class
-(by creating an error class hierarchy as you find for example in Python).
+Sometimes, it may be desirable to extend the ``fatal_error`` type. Either,
+because you wish to create some errors which carry more information than the
+base type does, or because you wish to differentiate between errors based on
+their class (by creating an error class hierarchy as you find for example in
+Python).
 
 The extension is straightforward. The following example demonstrates, how an I/O
 error could be introduced, which also contains the filename and the unit
@@ -355,12 +356,13 @@ provide convenience function to catch an error of the extended type and of the
 extended class [`<examples/error_extension.f90>`_]::
 
   module error_extension
-    use errorfx, only : fatal_error, init
+    use errorfx, only : fatal_error, fatal_error_init
     implicit none
 
     private
-    public :: io_error, init, create
-    public :: catch, catch_io_error_class
+    public :: io_error, io_error_init, catch_io_error_class
+    public :: create_error, catch_error, destroy_error
+
 
     !> Specific I/O error created by extending the general type
     type, extends(fatal_error) :: io_error
@@ -368,25 +370,25 @@ extended class [`<examples/error_extension.f90>`_]::
       character(:), allocatable :: filename
     end type io_error
 
-    !> Error initializer (use only in init routines of extending types)
-    interface init
-      module procedure io_error_init
-    end interface init
-
-    !> Error creator (use to create an error in the code)
-    interface create
-      module procedure io_error_create
-    end interface create
+    !> Error creator (use those routines to create an error in the code)
+    interface create_error
+      module procedure create_io_error
+    end interface create_error
 
     !> Catches specific error types
-    interface catch
+    interface catch_error
       module procedure catch_io_error
-    end interface catch
+    end interface catch_error
+
+    !> Deactivates and deallocates a specific error type
+    interface destroy_error
+      module procedure destroy_io_error
+    end interface destroy_error
 
   contains
 
     !> Creates an IO error.
-    pure subroutine io_error_create(this, code, message, unit, filename)
+    pure subroutine create_io_error(this, code, message, unit, filename)
       type(io_error), allocatable, intent(out) :: this
       integer, optional, intent(in) :: code
       character(*), optional, intent(in) :: message
@@ -394,9 +396,9 @@ extended class [`<examples/error_extension.f90>`_]::
       character(*), optional, intent(in) :: filename
 
       allocate(this)
-      call init(this, code=code, message=message, unit=unit, filename=filename)
+      call io_error_init(this, code=code, message=message, unit=unit, filename=filename)
 
-    end subroutine io_error_create
+    end subroutine create_io_error
 
 
     !> Initializes an io_error instance.
@@ -407,7 +409,7 @@ extended class [`<examples/error_extension.f90>`_]::
       integer, optional, intent(in) :: unit
       character(*), optional, intent(in) :: filename
 
-      call init(this%fatal_error, code=code, message=message)
+      call fatal_error_init(this%fatal_error, code=code, message=message)
       if (present(unit)) then
         this%unit = unit
       end if
@@ -418,12 +420,25 @@ extended class [`<examples/error_extension.f90>`_]::
     end subroutine io_error_init
 
 
+    !> Destroys an error explicitely (after deactivating it)
+    subroutine destroy_io_error(this)
+      type(io_error), allocatable, intent(inout) :: this
+
+      if (allocated(this)) then
+        call this%deactivate()
+        deallocate(this)
+      end if
+
+    end subroutine destroy_io_error
+
+
     !> Catches an io_error and executes an error handler
     subroutine catch_io_error(error, errorhandler)
       type(io_error), allocatable, intent(inout) :: error
       interface
         subroutine errorhandler(error)
           import :: io_error
+          implicit none
           type(io_error), intent(in) :: error
         end subroutine errorhandler
       end interface
@@ -441,6 +456,7 @@ extended class [`<examples/error_extension.f90>`_]::
       interface
         subroutine errorhandler(error)
           import :: io_error
+          implicit none
           class(io_error), intent(in) :: error
         end subroutine errorhandler
       end interface
@@ -461,7 +477,6 @@ extended class [`<examples/error_extension.f90>`_]::
     end subroutine catch_io_error_class
 
   end module error_extension
-
 
 Given different extensions of the base type, the patterns to generate and catch
 the errors change slightly. One would typically use ``class(fatal_error)``
@@ -522,7 +537,7 @@ Or in the more compact Fypp-form [`<examples/catch_class_fypp.fpp>`_]::
     class(fatal_error), allocatable :: error
 
     call routine_throwing_error(..., error)
-    #:block catch_class("error")
+    #:block catch_error_class("error")
     #:contains io_error
         print "(2a)", "IO Error found: ", error%message
     #:contains linalg_error
@@ -538,7 +553,7 @@ to the generic type, easily accomplished with a ``move_alloc()`` statement::
 
     type(io_error), allocatable :: ioerr
 
-    call create(ioerr, message="Failed to open file", filename="test.dat")
+    call create_error(ioerr, message="Failed to open file", filename="test.dat")
     call move_alloc(ioerr, error)
     return
     print "(a)", "you should not see this as an error was thrown before"
@@ -552,7 +567,7 @@ When using Fypp, it reduces to ::
 
     type(io_error), allocatable :: ioerr
 
-    @:throw_class(ioerr, io_error, message="Failed to open file", filename="test.dat")
+    @:throw_error_class(ioerr, io_error, message="Failed to open file", filename="test.dat")
     print "(a)", "you should not see this as an error was thrown before"
 
   end subroutine routine_throwing_error

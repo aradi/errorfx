@@ -1,5 +1,5 @@
 module rethrow_error
-  use errorfx, only : fatal_error, create, catch
+  use errorfx, only : fatal_error, create_error, catch_error
   implicit none
 
 contains
@@ -13,7 +13,7 @@ contains
     print "(a)", "Calling routine1"
     call routine1(error)
     print "(a)", "Handling error returned by routine1"
-    call catch(error, handle_error)
+    call catch_error(error, handle_error)
 
   contains
 
@@ -52,7 +52,7 @@ contains
   subroutine routine2(error)
     type(fatal_error), allocatable, intent(out) :: error
 
-    call create(error, message="Routine2 experienced a fatal error")
+    call create_error(error, message="Routine2 experienced a fatal error")
     return
     print "(a)", "you shoud not see this, as we returned due to an error already"
 
@@ -62,10 +62,10 @@ contains
 end module rethrow_error
 
 
-program rethrow_program
+program rethrow_error_program
   use rethrow_error, only : main
   implicit none
 
   call main()
 
-end program rethrow_program
+end program rethrow_error_program

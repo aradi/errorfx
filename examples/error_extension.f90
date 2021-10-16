@@ -1,11 +1,12 @@
 !> Extension of the original error type for creating more specific error types
 module error_extension
-  use errorfx, only : fatal_error, init
+  use errorfx, only : fatal_error, fatal_error_init
   implicit none
 
   private
-  public :: io_error, linalg_error, init, create
-  public :: catch, catch_io_error_class, catch_linalg_error_class
+  public :: io_error, io_error_init, catch_io_error_class
+  public :: linalg_error, linalg_error_init, catch_linalg_error_class
+  public :: create_error, catch_error, destroy_error
 
 
   !> Specific I/O error created by extending the general type
@@ -29,28 +30,26 @@ module error_extension
   end type linalg_error
 
 
-  !> Error initializers (use only in init routines of extending types)
-  interface init
-    module procedure io_error_init, linalg_error_init
-  end interface init
-
-
-  !> Error createor (use those routines to create an error in the code)
-  interface create
-    module procedure io_error_create, linalg_error_create
-  end interface create
-
+  !> Error creator (use those routines to create an error in the code)
+  interface create_error
+    module procedure create_io_error, create_linalg_error
+  end interface create_error
 
   !> Catches specific error types
-  interface catch
+  interface catch_error
     module procedure catch_io_error, catch_linalg_error
-  end interface catch
+  end interface catch_error
+
+  !> Deactivates and deallocates a specific error type
+  interface destroy_error
+    module procedure destroy_io_error, destroy_linalg_error
+  end interface destroy_error
 
 
 contains
 
   !> Creates an IO error.
-  pure subroutine io_error_create(this, code, message, unit, filename)
+  pure subroutine create_io_error(this, code, message, unit, filename)
 
     !> Instance.
     type(io_error), allocatable, intent(out) :: this
@@ -68,9 +67,9 @@ contains
     character(*), optional, intent(in) :: filename
 
     allocate(this)
-    call init(this, code=code, message=message, unit=unit, filename=filename)
+    call io_error_init(this, code=code, message=message, unit=unit, filename=filename)
 
-  end subroutine io_error_create
+  end subroutine create_io_error
 
 
   !> Initializes an io_error instance.
@@ -91,7 +90,7 @@ contains
     !> File name the io error is associated with
     character(*), optional, intent(in) :: filename
 
-    call init(this%fatal_error, code=code, message=message)
+    call fatal_error_init(this%fatal_error, code=code, message=message)
     if (present(unit)) then
       this%unit = unit
     end if
@@ -100,6 +99,20 @@ contains
     end if
 
   end subroutine io_error_init
+
+
+  !> Destroys an error explicitely (after deactivating it)
+  subroutine destroy_io_error(this)
+
+    !> Existing instance, unallocated on exit
+    type(io_error), allocatable, intent(inout) :: this
+
+    if (allocated(this)) then
+      call this%deactivate()
+      deallocate(this)
+    end if
+
+  end subroutine destroy_io_error
 
 
   !> Catches an io_error and executes an error handler
@@ -166,7 +179,7 @@ contains
 
 
   !> Creates a linear algebra error
-  pure subroutine linalg_error_create(this, code, message, info)
+  pure subroutine create_linalg_error(this, code, message, info)
 
     !> Instance.
     type(linalg_error), allocatable, intent(out) :: this
@@ -181,9 +194,9 @@ contains
     integer, optional, intent(in) :: info
 
     allocate(this)
-    call init(this, code=code, message=message, info=info)
+    call linalg_error_init(this, code=code, message=message, info=info)
 
-  end subroutine linalg_error_create
+  end subroutine create_linalg_error
 
 
   !> Initializes an linalg_error instance.
@@ -201,12 +214,26 @@ contains
     !> Info flag (e.g. info flag returned by BLAS/LAPACK)
     integer, optional, intent(in) :: info
 
-    call init(this%fatal_error, code=code, message=message)
+    call fatal_error_init(this%fatal_error, code=code, message=message)
     if (present(info)) then
       this%info = info
     end if
 
   end subroutine linalg_error_init
+
+
+  !> Destroys an error explicitely (after deactivating it)
+  subroutine destroy_linalg_error(this)
+
+    !> Existing instance, unallocated on exit
+    type(linalg_error), allocatable, intent(inout) :: this
+
+    if (allocated(this)) then
+      call this%deactivate()
+      deallocate(this)
+    end if
+
+  end subroutine destroy_linalg_error
 
 
   !> Catches an linalg_error and executes an error handler

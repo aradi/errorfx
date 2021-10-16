@@ -1,7 +1,7 @@
 #:include "errorfx.fypp"
 
 program catch_fypp
-  use errorfx, only : fatal_error, create
+  use errorfx, only : fatal_error, create_error
   implicit none
 
   call main()
@@ -16,7 +16,7 @@ contains
     type(fatal_error), allocatable :: error
 
     call routine1(error)
-    #:block catch("error")
+    #:block catch_error("error")
       print "(a,a,a,i0,a)", "Fatal error found: '", error%message, "' (code: ", error%code, ")"
     #:endblock
 
@@ -27,7 +27,7 @@ contains
     type(fatal_error), allocatable, intent(out) :: error
 
     ! Creating and throwing an error
-    @:throw(error, message="Error created in routine1")
+    @:throw_error(error, message="Error created in routine1")
     print "(a)", "you shoud not see this, as we returned due to an error already"
 
   end subroutine routine1

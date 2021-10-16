@@ -1,6 +1,6 @@
 module fail_uncaught_class
-  use errorfx, only : fatal_error, create
-  use error_extension, only : io_error, linalg_error, create, catch_io_error_class,&
+  use errorfx, only : fatal_error, create_error
+  use error_extension, only : io_error, linalg_error, create_error, catch_io_error_class,&
       & catch_linalg_error_class
   implicit none
 
@@ -60,7 +60,7 @@ contains
 
     type(linalg_error), allocatable :: linalgerr
 
-    call create(linalgerr, message="Matrix is not positive definite", code=-1, info=12)
+    call create_error(linalgerr, message="Matrix is not positive definite", code=-1, info=12)
     ! Putting specific error type into generic class
     call move_alloc(linalgerr, error)
     return
