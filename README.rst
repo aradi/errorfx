@@ -219,6 +219,45 @@ catching construct without the need for explicit error handling routines
     #:endblock
 
 
+Rethrowing an error
+-------------------
+
+If during error handling of a caught error it turns out, that the error can not
+be handled locally, the code may either throw (create and propagate) a new error
+or just rethrow the original one. Latter can be achieved by activating the
+error again (in case it was deactivated already) and returning::
+
+  subroutine routine_rethrowing_error(error)
+    type(fatal_error), allocatable, intent(out) :: error
+
+    call routine_throwing_error(error)
+    if (allocated(error)) then
+      call error%deactivate()
+      :
+      ! Rethrowing error
+      call error%activate()
+      return
+    end if
+    :
+
+Note, that if you do not leave the scope via return during the error handling
+(except when rethrowing the error), the calls ``error%deactivate()`` and
+``error%activate()`` can be omitted.
+
+The compact Fypp based analog would be ::
+
+  subroutine routine_rethrowing_error(error)
+    type(fatal_error), allocatable, intent(out) :: error
+
+    call routine_throwing_error(error)
+    #:block catch("error")
+      :
+      ! Rethrowing error
+      @:rethrow(error)
+    #:endblock
+    :
+
+
 Failure due to an uncaught error
 --------------------------------
 

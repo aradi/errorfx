@@ -37,6 +37,9 @@ module errorfx
 
   contains
 
+    !> Activates the error
+    procedure :: activate => fatal_error_activate
+
     !> Deactivtes the error
     procedure :: deactivate => fatal_error_deactivate
 
@@ -105,7 +108,7 @@ contains
 
     if (present(code)) this%code = code
     if (present(message)) this%message = message
-    this%active = .true.
+    call this%activate()
 
   end subroutine fatal_error_init
 
@@ -130,6 +133,17 @@ contains
     end if
 
   end subroutine fatal_error_final
+
+
+  !> Activates the error (error will stop the code if it goes out of scope)
+  pure subroutine fatal_error_activate(this)
+
+    !> Instance
+    class(fatal_error), intent(inout) :: this
+
+    this%active = .false.
+
+  end subroutine fatal_error_activate
 
 
   !> Deactivates the error (error would not stop the code if going out of scope)

@@ -7,14 +7,16 @@ set(examples
     fail_uncaught
     fail_uncaught_class
     ignore_unactivated
-    propagate_error)
+    propagate_error
+    rethrow_error)
 
 set(fypp-examples
     catch_error_fypp
     catch_error_class_fypp
     fail_uncaught_fypp
     fail_uncaught_class_fypp
-    propagate_error_fypp)
+    propagate_error_fypp
+    rethrow_error_fypp)
 
 add_library(common OBJECT ${common-sources})
 target_link_libraries(common errorfx)

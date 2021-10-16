@@ -1,4 +1,6 @@
 #:mute
+#:if not defined('_ERRORFX_FYPP_')
+#:set _ERRORFX_FYPP_
 
 #:set RECORD_PROPAGATION = getvar("RECORD_PROPAGATION", False)
 
@@ -68,4 +70,14 @@
   end block
 #:enddef
 
+
+#:def rethrow(errorvar)
+  call ${errorvar}$%activate()
+  #:if RECORD_PROPAGATION
+    call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+  #:endif
+  return
+#:enddef
+
+#:endif
 #:endmute
