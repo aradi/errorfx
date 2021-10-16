@@ -81,7 +81,7 @@ Implementation details
 Error type
 ----------
 
-The error type in ErroFx is ``type(fatal_error)`` [`<src/errorfx.f90>`_].
+The error type in ErrorFx is ``type(fatal_error)`` [`<src/errorfx.f90>`_].
 When a subroutine is called, which may throw a critical error, the code in the
 caller would look as ::
 
@@ -196,7 +196,7 @@ routine ``destroy()``::
     end if
 
 As the "manual" error handling is somewhat error prone (you may forget to
-deactivate or deallocate), ErroFx offers you the possibility to handle the error
+deactivate or deallocate), ErrorFx offers you the possibility to handle the error
 via a dedicated (internal or external) subroutine. The library will first
 deactivate the error, then call the error handling routine and finally
 deallocate the error [`<examples/catch.f90>`_]::
