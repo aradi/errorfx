@@ -340,6 +340,61 @@ useful, if the error was propagated upwards through several levels::
           at errorfx/examples/fail_uncaught_fypp.fpp:20
 
 
+Error handling in functions
+---------------------------
+
+Passing critical errors from functions is also possible, but due to current
+limitations of the Fortran language and of Fypp, it is considerably more
+involved as for subroutines. A function can return an error by returning a
+composite result type, which accomodates the actual result as well as the
+possible error. For a function returning an integer, it would look as::
+
+  type :: int_result
+    integer :: value
+    type(fatal_error), allocatable :: error
+  end type int_result
+
+When the function returns, the caller has to check, whether the error had been
+allocated and handle it locally or propagate it, if that was the case. ::
+
+  subroutine subroutine_with_error(error)
+    type(fatal_error), allocatable, intent(out) :: error
+
+    integer :: ii
+    block
+      type(int_result) :: res
+      res = function_with_error(fail=.true.)
+      if (allocated(res%error)) then
+        ! We simply propagate the error upwards
+        call move_alloc(res%error, error)
+        return
+      end if
+      ii = res%value
+    end block
+    print "(a,i0)", "Value obtained in the subroutine (no error thrown): ", ii
+    :
+
+Fypp offers two convenience macros, which enables a more compact representation.
+The result type for integer results can be declared as::
+
+  @:declare_result_type(name=int_result, value_type=integer, error_type=type(fatal_error))
+
+The error propagation scenario can written as ::
+
+  subroutine subroutine_with_error(error)
+    type(fatal_error), allocatable, intent(out) :: error
+
+    integer :: ii
+    type(int_result), allocatable :: ires
+
+    @:try_assign(lhs=ii, rhs=function_with_error(fail=.true.),&
+        & result_type=int_result, error=error)
+    print "(a,i0)", "Value obtained in the subroutine (no error thrown): ", ii
+
+If an error occured during the assigment, the error would be propagated upwards,
+otherwise the code would continue after the assignment.
+
+
 Extending errors
 ----------------
 

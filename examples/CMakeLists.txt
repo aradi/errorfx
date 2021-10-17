@@ -6,6 +6,7 @@ set(examples
     catch_error_class
     fail_uncaught
     fail_uncaught_class
+    function_error
     ignore_unactivated
     propagate_error
     rethrow_error)
@@ -15,6 +16,7 @@ set(fypp-examples
     catch_error_class_fypp
     fail_uncaught_fypp
     fail_uncaught_class_fypp
+    function_error_fypp
     propagate_error_fypp
     rethrow_error_fypp)
 

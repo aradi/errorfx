@@ -37,10 +37,13 @@
 #:enddef
 
 
-#:def propagate_error(errorvar)
-  if (allocated(${errorvar}$)) then
+#:def propagate_error(error, target=None)
+  if (allocated(${error}$)) then
     #:if RECORD_PROPAGATION
-      call ${errorvar}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+      call ${error}$%add_propagation_info("${_FILE_}$", ${_LINE_}$)
+    #:endif
+    #:if target is not None
+      call move_alloc(${error}$, ${target}$)
     #:endif
     return
   end if
@@ -78,6 +81,25 @@
   #:endif
   return
 #:enddef
+
+
+#:def declare_result_type(name, value_type, error_type)
+  type :: ${name}$
+    ${value_type}$ :: value
+    ${error_type}$, allocatable :: error
+  end type ${name}$
+#:enddef
+
+
+#:def try_assign(lhs, rhs, result_type, error)
+  block
+    type(${result_type}$) :: ${lhs}$_result
+    ${lhs}$_result = ${rhs}$
+    @:propagate_error(${lhs}$_result%error, target=${error}$)
+    ${lhs}$ = ${lhs}$_result%value
+  end block
+#:enddef
+
 
 #:endif
 #:endmute
